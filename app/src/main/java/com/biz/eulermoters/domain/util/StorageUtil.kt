@@ -16,6 +16,7 @@ class StorageUtil {
 
     @SuppressLint("SdCardPath")
     private val KNOWN_PHYSICAL_PATHS = arrayOf(
+        "/storage/usb_storage",
         "/storage/sdcard0",
         "/storage/sdcard1",  //Motorola Xoom
         "/storage/extsdcard",  //Samsung SGS3
@@ -24,6 +25,9 @@ class StorageUtil {
         "/mnt/sdcard/external_sd",  //Samsung galaxy family
         "/mnt/sdcard/ext_sd",
         "/mnt/external_sd",
+        "/mnt/usb_storage/*",
+        "/mnt/media_rw/*",
+        "/mnt/media_rw/FCA2-AA69",  //4.4.2 on CyanogenMod S3
         "/mnt/media_rw/sdcard1",  //4.4.2 on CyanogenMod S3
         "/removable/microsd",  //Asus transformer prime
         "/mnt/emmc",
@@ -58,10 +62,7 @@ class StorageUtil {
             for (file in files) {
                 if (file != null) {
                     val applicationSpecificAbsolutePath = file.absolutePath
-                    val rootPath = applicationSpecificAbsolutePath.substring(
-                        0,
-                        applicationSpecificAbsolutePath.indexOf("Android/data")
-                    )
+                    val rootPath = applicationSpecificAbsolutePath.substring(0, applicationSpecificAbsolutePath.indexOf("Android/data"))
                     availableDirectoriesSet.add(rootPath)
                 }
             }

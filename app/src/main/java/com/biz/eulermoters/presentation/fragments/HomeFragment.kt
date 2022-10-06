@@ -3,6 +3,7 @@ package com.biz.eulermoters.presentation.fragments
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.MediaController
 import androidx.lifecycle.lifecycleScope
@@ -16,8 +17,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.InputStream
 import java.util.*
-import kotlin.collections.ArrayList
+import java.util.regex.Pattern
+
 
 @AndroidEntryPoint
 class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>(), recyclerAdapter.OnClickInterface {
@@ -31,10 +34,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>(), recycle
     private var currentVideo : Int = 0
 
     var videoExtensions = arrayOf(
-        ".mp4", ".ts", ".mkv", ".mov",
-        ".3gp", ".mv2", ".m4v", ".webm", ".mpeg1", ".mpeg2", ".mts", ".ogm",
-        ".bup", ".dv", ".flv", ".m1v", ".m2ts", ".mpeg4", ".vlc", ".3g2",
-        ".avi", ".mpeg", ".mpg", ".wmv", ".asf"
+        ".mp3"
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -53,7 +53,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>(), recycle
             }, {
                 prevVideo()
             })
-           setupVideoView(mediaController)
+//           setupVideoView(mediaController)
         }
     }
 
@@ -119,15 +119,64 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>(), recycle
 
     @SuppressLint("NotifyDataSetChanged")
     private suspend fun loadFiles(){
-        storagePaths = storageUtil.getStorageDirectories(requireActivity().applicationContext)
-        for (path in storagePaths) {
-            storage = File(path)
-            load_Directory_Files(storage!!)
+        val str = getExternalMounts()
+        Log.d("LogTag", str.toString())
+
+        if (str != null) {
+            for (path in str) {
+                val result: String = path.substring(path.lastIndexOf('/') + 1).trim()
+                storage = File(requireContext().applicationContext.getExternalFilesDir(path), "test.mp3")
+                Log.d("LogTag", storage?.path.toString())
+                load_Directory_Files(storage!!)
+            }
         }
+
+//        storagePaths = storageUtil.getStorageDirectories(requireActivity().applicationContext)
+//
+//        for (path in storagePaths) {
+//            storage = File(path)
+//            Log.d("LogTagStorage", path.toString())
+//            load_Directory_Files(storage!!)
+//        }
+
         withContext(Dispatchers.Main){
             recyclerViewAdapter.notifyDataSetChanged()
             setupMediaPlayer()
         }
+    }
+
+
+    fun getExternalMounts(): ArrayList<String>? {
+        val out = kotlin.collections.ArrayList<String>()
+        val reg = "(?i).*vold.*(vfat|ntfs|exfat|fat32|ext3|ext4).*rw.*"
+        var s = ""
+        try {
+            val process = ProcessBuilder().command("mount").redirectErrorStream(true).start()
+            process.waitFor()
+            val `is`: InputStream = process.inputStream
+            val buffer = ByteArray(1024)
+            while (`is`.read(buffer) !== -1) {
+                s = s + String(buffer)
+            }
+            `is`.close()
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+
+        // parse output
+        val lines = s.split("\n").toTypedArray()
+        for (line in lines) {
+            if (!line.lowercase(Locale.US).contains("asec")) {
+                if (line.matches(reg.toRegex())) {
+                    val parts = line.split(" ").toTypedArray()
+                    for (part in parts) {
+                        if (part.startsWith("/")) if (!part.lowercase(Locale.US).contains("vold")
+                        ) out.add(part)
+                    }
+                }
+            }
+        }
+        return out
     }
 
     private fun setupRecyclerView() {
@@ -144,6 +193,9 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>(), recycle
 
     suspend fun load_Directory_Files(directory: File) {
         val fileList = directory.listFiles()
+        if (fileList != null) {
+            Log.d("LogTag", fileList.toString())
+        }
         try {
             if (fileList != null && fileList.isNotEmpty()) {
                 for (i in fileList.indices) {
