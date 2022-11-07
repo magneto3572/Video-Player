@@ -11,6 +11,7 @@
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_MEDIA_STORAGE" />
 
+
     <application
         android:name=".presentation.MyApplication"
         android:allowBackup="true"

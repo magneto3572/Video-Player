@@ -3,6 +3,7 @@ package com.biz.eulermoters.presentation.fragments
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.View
 import android.widget.MediaController
@@ -19,7 +20,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
 import java.util.*
-import java.util.regex.Pattern
+import kotlin.collections.ArrayList
+import kotlin.math.log
 
 
 @AndroidEntryPoint
@@ -125,7 +127,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>(), recycle
         if (str != null) {
             for (path in str) {
                 val result: String = path.substring(path.lastIndexOf('/') + 1).trim()
-                storage = File(requireContext().applicationContext.getExternalFilesDir(path), "test.mp3")
+                storage = File(Environment.getExternalStorageState())
                 Log.d("LogTag", storage?.path.toString())
                 load_Directory_Files(storage!!)
             }
@@ -146,8 +148,10 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>(), recycle
     }
 
 
-    fun getExternalMounts(): ArrayList<String>? {
-        val out = kotlin.collections.ArrayList<String>()
+
+
+    fun getExternalMounts(): kotlin.collections.ArrayList<String>? {
+        val out = ArrayList<String>()
         val reg = "(?i).*vold.*(vfat|ntfs|exfat|fat32|ext3|ext4).*rw.*"
         var s = ""
         try {
